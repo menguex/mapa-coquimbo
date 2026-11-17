@@ -75,6 +75,29 @@
 <button class="reopen glass" id="reopen" aria-label="Mostrar panel" hidden><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg><span data-i18n="explore">Explorar</span></button>
 
 <!-- Map controls -->
+<div class="cartouche" aria-hidden="true">
+  <svg class="rose" viewBox="0 0 120 120" width="92" height="92">
+    <circle cx="60" cy="60" r="50" fill="none" stroke="#5A4632" stroke-width=".8" opacity=".55"/>
+    <circle cx="60" cy="60" r="44" fill="none" stroke="#5A4632" stroke-width=".5" stroke-dasharray="1 2.2" opacity=".6"/>
+    <g stroke="#5A4632" stroke-width=".6" opacity=".55"><path d="M60 6v8M60 106v8M6 60h8M106 60h8"/><path d="M21.8 21.8l4.3 4.3M93.9 93.9l4.3 4.3M98.2 21.8l-4.3 4.3M26.1 93.9l-4.3 4.3"/></g>
+    <g transform="rotate(45 60 60)" opacity=".7"><path d="M60 30 64 56 60 60 56 56z" fill="#B9A487"/><path d="M60 90 64 64 60 60 56 64z" fill="#B9A487"/><path d="M30 60 56 56 60 60 56 64z" fill="#B9A487"/><path d="M90 60 64 56 60 60 64 64z" fill="#B9A487"/></g>
+    <path d="M60 14 66 54 60 60z" fill="#A0561A"/><path d="M60 14 54 54 60 60z" fill="#C97A3D"/>
+    <path d="M60 106 66 66 60 60z" fill="#3B3027"/><path d="M60 106 54 66 60 60z" fill="#6B5A48"/>
+    <path d="M14 60 54 54 60 60z" fill="#6B5A48"/><path d="M14 60 54 66 60 60z" fill="#3B3027"/>
+    <path d="M106 60 66 54 60 60z" fill="#3B3027"/><path d="M106 60 66 66 60 60z" fill="#6B5A48"/>
+    <circle cx="60" cy="60" r="3.2" fill="#F6EEDC" stroke="#3B3027" stroke-width="1"/>
+    <text x="60" y="4.5" text-anchor="middle" font-family="Inter Tight,Inter,sans-serif" font-size="9" font-weight="800" fill="#A0561A" letter-spacing=".1em">N</text>
+  </svg>
+  <div class="ct-txt">
+    <span class="ct-k">Norte Chico · Chile</span>
+    <span class="ct-t">Región de Coquimbo</span>
+    <svg class="greca" viewBox="0 0 160 14" width="160" height="14"><defs><pattern id="cqGreca" width="20" height="14" patternUnits="userSpaceOnUse">
+      <path d="M0 12h2.5V9.5H5V7h2.5V4.5H10V2h0V4.5h2.5V7H15v2.5h2.5V12H20" fill="none" stroke="#A0561A" stroke-width="1.6" stroke-linejoin="miter"/>
+      <path d="M10 12V9.5" stroke="#3B3027" stroke-width="1.6"/><rect x="9" y="12.2" width="2" height="1.6" fill="#3B3027"/></pattern></defs>
+      <path d="M0 .6h160" stroke="#3B3027" stroke-width=".8"/><rect y="0" width="160" height="14" fill="url(#cqGreca)"/><path d="M0 13.6h160" stroke="#3B3027" stroke-width=".8"/></svg>
+    <span class="ct-s"><i></i><b>0</b><b>25</b><b>50 km</b></span>
+  </div>
+</div>
 <div class="seg lang lang-float glass" role="group" aria-label="Idioma / Language"><button data-lang="es" aria-pressed="true">ES</button><button data-lang="en" aria-pressed="false">EN</button></div>
 <div class="mapctl" id="mapctl">
   <div class="ctl-group glass">
@@ -88,12 +111,13 @@
 <article class="card" id="card" aria-live="polite" aria-hidden="true"></article>
 
 <!-- Credits -->
-<div class="credits-bar" id="credits"><button id="creditsBtn" aria-expanded="false"><span>© Fundación Herencia y Futuro · Esri · OpenStreetMap</span><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg></button><div class="credits-pop" id="creditsPop"></div></div>
+<div class="credits-bar" id="credits"><button id="creditsBtn" aria-expanded="false"><span>© Fundación Herencia y Futuro · Stamen · Esri · OSM</span><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg></button><div class="credits-pop" id="creditsPop"></div></div>
 <div class="toast" id="toast" role="status"></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <script src="places.js"></script>
+<script src="sea.js"></script>
 <script src="icons.js"></script>
 <script src="app.js"></script>
 </body>

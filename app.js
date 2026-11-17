@@ -63,22 +63,41 @@ function toast(msg,ms){var el=$('toast');el.textContent=msg;el.classList.add('sh
    ========================================================= */
 var map=L.map('map',{zoomControl:false,attributionControl:false,minZoom:6,maxZoom:17,zoomSnap:.25,zoomDelta:.5,wheelPxPerZoomLevel:140,wheelDebounceTime:30,
  inertia:true,inertiaDeceleration:2400,inertiaMaxSpeed:2200,easeLinearity:.18,zoomAnimation:!REDUCED,markerZoomAnimation:!REDUCED,fadeAnimation:!REDUCED,bounceAtZoomLimits:false});
-map.createPane('hill');map.getPane('hill').classList.add('hill-pane');map.getPane('hill').style.zIndex=250;map.getPane('hill').style.pointerEvents='none';
-map.createPane('mask');map.getPane('mask').style.zIndex=300;map.getPane('mask').style.pointerEvents='none';
-map.createPane('roads');map.getPane('roads').style.zIndex=310;map.getPane('roads').style.pointerEvents='none';map.getPane('roads').classList.add('roads-pane');
+function pane(n,z,cls){var p=map.createPane(n);p.style.zIndex=z;p.style.pointerEvents='none';if(cls)p.classList.add(cls);return p}
+pane('hill',250,'hill-pane');pane('sea',258,'sea-pane');pane('paper',290,'paper-pane');pane('mask',300,'mask-pane');pane('roads',310,'roads-pane');
 map.createPane('routes');map.getPane('routes').style.zIndex=420;
 map.createPane('towns');map.getPane('towns').style.zIndex=590;
+/* ---- Rustic base: watercolour paper (Stamen Watercolor archive) + tinted hillshade + paper grain ---- */
 var ESRI='https://services.arcgisonline.com/arcgis/rest/services/';
-var terrain=L.tileLayer(ESRI+'World_Terrain_Base/MapServer/tile/{z}/{y}/{x}',{maxNativeZoom:9,maxZoom:10.75,className:'tiles-relief',keepBuffer:4}).addTo(map);
-L.tileLayer(ESRI+'Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}',{pane:'hill',maxNativeZoom:13,maxZoom:10.75,keepBuffer:4}).addTo(map);
-L.tileLayer(ESRI+'Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}',{pane:'roads',maxNativeZoom:11,maxZoom:10.75}).addTo(map);
-L.tileLayer(ESRI+'World_Topo_Map/MapServer/tile/{z}/{y}/{x}',{minZoom:11,maxZoom:19,maxNativeZoom:16,className:'tiles-topo',keepBuffer:4}).addTo(map);
-
+var WC='https://watercolormaps.collection.cooperhewitt.org/tile/watercolor/{z}/{x}/{y}.jpg';
+var terrain=L.tileLayer(WC,{maxNativeZoom:15,maxZoom:19,className:'tiles-wc',keepBuffer:4,crossOrigin:false}).addTo(map);
+var fallback=null,wcErr=0;
+terrain.on('tileerror',function(){if(++wcErr>3&&!fallback){fallback=L.tileLayer(ESRI+'World_Terrain_Base/MapServer/tile/{z}/{y}/{x}',{maxNativeZoom:9,maxZoom:19,className:'tiles-relief',keepBuffer:4,zIndex:0}).addTo(map)}});
+L.tileLayer(ESRI+'Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}',{pane:'hill',maxNativeZoom:15,maxZoom:19,keepBuffer:4}).addTo(map);
+L.tileLayer(ESRI+'Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}',{pane:'roads',minZoom:9,maxNativeZoom:16,maxZoom:19,className:'tiles-roads'}).addTo(map);
+/* paper grain: one viewport-sized element inside the map pane (multiplies tiles, stays under pins) */
+var paperEl=L.DomUtil.create('div','paper-grain',map.getPane('paper'));
+function placePaper(){if(!map._loaded)return;var tl=map.containerPointToLayerPoint([0,0]);L.DomUtil.setPosition(paperEl,tl);var o=map.getPixelOrigin();paperEl.style.backgroundPosition=(-(o.x+tl.x)%512)+'px '+(-(o.y+tl.y)%512)+'px'}
+map.on('move zoomend resize viewreset',placePaper);
+/* live scale bar in the cartouche */
+function updScale(){if(!map._loaded)return;var el=document.querySelector('.ct-s');if(!el)return;var y=map.getSize().y/2,a=map.containerPointToLatLng([0,y]),b=map.containerPointToLatLng([120,y]);var m=a.distanceTo(b);
+ var k=Math.pow(10,Math.floor(Math.log10(m))),n=[5,2,1].map(function(f){return f*k}).filter(function(v){return v<=m})[0]||k;var w=Math.round(120*n/m);
+ var f=function(v){return v>=1000?(v/1000)+'':(v)+''},u=n>=1000?' km':' m';el.style.setProperty('--sw',w+'px');var bs=el.querySelectorAll('b');bs[0].textContent='0';bs[1].textContent=f(n/2);bs[2].textContent=f(n)+u}
+map.on('zoomend',updScale);
 // region mask + outline
 var polys=REGION.type==='MultiPolygon'?REGION.coordinates:[REGION.coordinates];
 var holes=polys.map(function(pg){return pg[0].map(function(c){return [c[1],c[0]]})});
-L.polygon([[[-10,-90],[-10,-40],[-50,-40],[-50,-90]]].concat(holes),{pane:'mask',stroke:false,fillColor:'#F6F2EA',fillOpacity:.6,interactive:false}).addTo(map);
-L.polygon(holes,{pane:'mask',fill:false,color:'#7E6A50',weight:1.4,opacity:.6,interactive:false}).addTo(map);
+/* sea: engraved wave lines from the coastline westwards (computed from the region outline) */
+(function(){var ring=window.SEA;if(!ring)return;
+ var sr=L.svg({pane:'sea',padding:.5});L.polygon(ring,{renderer:sr,className:'sea-wash',stroke:false,fillColor:"#9FB9C6",fillOpacity:1,interactive:false,smoothFactor:2}).addTo(map);L.polygon(ring,{renderer:sr,className:'sea-waves',stroke:false,fillOpacity:1,interactive:false,smoothFactor:2}).addTo(map);
+ var cst=ring[0].slice(1,-3);L.polyline(cst,{renderer:sr,color:'#7E9AA6',weight:7,opacity:.35,interactive:false,lineJoin:'round'}).addTo(map);L.polyline(cst,{renderer:sr,color:'#3F5A66',weight:1.1,opacity:.75,interactive:false,lineJoin:'round'}).addTo(map);
+ map.whenReady(function(){var svgEl=sr._container;var ns='http://www.w3.org/2000/svg';var defs=document.createElementNS(ns,'defs');
+ defs.innerHTML='<pattern id="cqWaves" width="36" height="13" patternUnits="userSpaceOnUse"><path d="M0 7c4.5-3 9-3 13.5 0S22.5 10 27 7s6.8-2.2 9 -.8" fill="none" stroke="#46687A" stroke-width="1" stroke-linecap="round" opacity=".55"/></pattern>'+
+  '<linearGradient id="cqSeaFade" x1="1" y1="0" x2="0" y2="0"><stop offset="0" stop-color="#fff"/><stop offset=".7" stop-color="#fff" stop-opacity=".35"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>';
+ svgEl.insertBefore(defs,svgEl.firstChild)})})();
+L.polygon([[[-10,-90],[-10,-40],[-50,-40],[-50,-90]]].concat(holes),{pane:'mask',stroke:false,fillColor:'#EADCC1',fillOpacity:.62,interactive:false,className:'mask-out'}).addTo(map);
+L.polygon(holes,{pane:'mask',fill:false,color:'#A0561A',weight:6,opacity:.12,interactive:false,lineJoin:'round'}).addTo(map);
+L.polygon(holes,{pane:'mask',fill:false,color:'#5A4632',weight:1.2,opacity:.7,dashArray:'7 3 1.5 3',interactive:false,lineJoin:'round'}).addTo(map);
 var REGION_BOX=L.latLngBounds([-29.05,-71.75],[-32.25,-69.95]);
 
 var geoLabels=[];
@@ -90,12 +109,12 @@ function drawGeo(){geoLabels.forEach(function(m){map.removeLayer(m)});geoLabels=
 /* Routes */
 var routeLayers={};
 ROUTES.forEach(function(r){var g=ROUTE_GEO[r.id];if(!g)return;var c=CATS[r.cat].color;r.km=g.km;
- var casing=L.polyline(g.coords,{pane:'routes',color:'#fff',weight:7,opacity:.85,lineCap:'round',lineJoin:'round',interactive:false,smoothFactor:1.5});
+ var casing=L.polyline(g.coords,{pane:'routes',color:'#FBF3E2',weight:7,opacity:.9,lineCap:'round',lineJoin:'round',interactive:false,smoothFactor:1.5});
  var line=L.polyline(g.coords,{pane:'routes',color:c,weight:3,opacity:.9,lineCap:'round',lineJoin:'round',smoothFactor:1.5});
  line.on('click',function(){toggleRoute(r.id,true)});
  routeLayers[r.id]={g:L.layerGroup([casing,line]).addTo(map),line:line,casing:casing};});
 function styleRoutes(){ROUTES.forEach(function(r){var L2=routeLayers[r.id];if(!L2)return;var on=activeRoute===r.id,any=!!activeRoute;
- L2.line.setStyle({weight:on?5:3,opacity:any&&!on?.22:.9});L2.casing.setStyle({weight:on?10:7,opacity:any&&!on?.3:.85});if(on){L2.casing.bringToFront();L2.line.bringToFront()}})}
+ L2.line.setStyle({weight:on?4.5:2.6,opacity:any&&!on?.25:.92,dashArray:on?null:'7 5'});L2.casing.setStyle({weight:on?9:6,opacity:any&&!on?.25:on?.95:.7});if(on){L2.casing.bringToFront();L2.line.bringToFront()}})}
 
 /* Markers */
 var cluster=L.markerClusterGroup({showCoverageOnHover:false,spiderfyOnMaxZoom:true,disableClusteringAtZoom:13,animate:!REDUCED,
@@ -337,7 +356,7 @@ document.addEventListener('keydown',function(e){if(e.key==='/'&&document.activeE
    Controls, credits, language
    ========================================================= */
 $('zin').onclick=function(){map.zoomIn(.75)};$('zout').onclick=function(){map.zoomOut(.75)};$('zreset').onclick=function(){if(selected)closeCard();fitRegion()};
-function renderCredits(){$('creditsPop').innerHTML='<b>'+t('creditsT')+'</b><p>'+t('credits')+'</p><p>Relieve y cartografía: Esri, USGS, NOAA, NASA, HERE, Garmin, © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>. Rutas: OSRM. Mapa: <a href="https://leafletjs.com" target="_blank" rel="noopener">Leaflet</a>.</p>'}
+function renderCredits(){$('creditsPop').innerHTML='<b>'+t('creditsT')+'</b><p>'+t('credits')+'</p><p>Acuarela base: Stamen Design (CC BY 3.0), archivo Cooper Hewitt. Relieve y caminos: Esri, USGS, NOAA, NASA, HERE, Garmin, © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>. Rutas: OSRM. Mapa: <a href="https://leafletjs.com" target="_blank" rel="noopener">Leaflet</a>.</p>'}
 $('creditsBtn').onclick=function(e){e.stopPropagation();var p=$('creditsPop');var o=!p.classList.contains('open');p.classList.toggle('open',o);this.setAttribute('aria-expanded',o)};
 document.addEventListener('click',function(e){if(!e.target.closest('.credits-bar'))$('creditsPop').classList.remove('open')});
 function applyLang(){document.documentElement.lang=lang;
@@ -356,8 +375,8 @@ window.addEventListener('resize',function(){clearTimeout(window.__rz);window.__r
 /* =========================================================
    Boot
    ========================================================= */
-applyLang();styleRoutes();zoomClass();layoutSheets();
-fitRegion(true);zoomClass();
+applyLang();styleRoutes();zoomClass();layoutSheets();placePaper();
+fitRegion(true);zoomClass();placePaper();updScale();
 var booted=false;function boot(){if(booted)return;booted=true;$('loader').classList.add('done');setTimeout(function(){if(!selected)toast(t('tapHint'),3200)},700)}
 terrain.once('load',function(){setTimeout(boot,150)});setTimeout(boot,3500);
 var m0=location.hash.match(/lugar-(\d+)/);if(m0)openPlace(+m0[1],{instant:true});

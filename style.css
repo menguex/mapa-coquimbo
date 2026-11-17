@@ -26,12 +26,19 @@ a{color:inherit}
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.glass{background:rgba(255,253,249,.97)}}
 
 /* ---------- Map ---------- */
-#map{position:fixed;inset:0;background:#EDE7DC}
+#map{position:fixed;inset:0;background:#EFE4CF}
 .leaflet-container{font-family:var(--f-sans);background:#EDE7DC}
-.tiles-relief{filter:sepia(.42) saturate(1.08) hue-rotate(-8deg) brightness(1.03)}
-.tiles-topo{filter:sepia(.32) saturate(.72) brightness(1.04) contrast(.94)}
-.leaflet-pane.hill-pane{mix-blend-mode:multiply;opacity:.5}
-.roads-pane{opacity:.5;filter:sepia(.6) saturate(.6)}
+.tiles-relief{filter:sepia(.55) saturate(.9) hue-rotate(-6deg) brightness(1.02)}
+/* Rustic base — watercolour paper retinted to the Norte Chico palette: sand/ochre land, dusty-blue sea */
+.tiles-wc{filter:sepia(.38) saturate(.66) hue-rotate(-6deg) contrast(.96) brightness(1.01)}
+.paper-grain{position:absolute;left:0;top:0;width:100vw;height:100vh;background:url(paper.jpg) 0 0/512px 512px repeat;will-change:transform}
+.paper-grain:after{content:"";position:absolute;inset:0;background:radial-gradient(130% 110% at 55% 45%,transparent 55%,rgba(120,84,40,.16) 100%)}
+.sea-waves{fill:url(#cqWaves)}
+.leaflet-pane.paper-pane{mix-blend-mode:multiply}
+
+.tiles-roads{opacity:.55;filter:sepia(.85) saturate(.55) hue-rotate(-10deg)}
+.leaflet-pane.hill-pane{mix-blend-mode:multiply;opacity:.58;filter:sepia(.55) saturate(.85) hue-rotate(-8deg) contrast(1.05)}
+
 .leaflet-fade-anim .leaflet-tile{will-change:opacity}
 .leaflet-tile-container{transition:none}
 
@@ -292,6 +299,19 @@ body.card-open .credits-bar{transform:translateX(calc(-1 * (var(--card-w) + 16px
 .valley-label{font-family:var(--f-display);color:#7A6852;font-size:10.5px;font-weight:700;letter-spacing:.32em;text-transform:uppercase;white-space:nowrap;pointer-events:none;text-shadow:0 0 3px #fff,0 0 8px #fff;transition:opacity 300ms}
 .z-near .valley-label,.z-hi .valley-label{opacity:0}
 
+/* ---------- Cartouche (compass rose + Diaguita fret) ---------- */
+.cartouche{position:fixed;z-index:1040;left:calc(var(--panel-w) + 16px + 32px);bottom:32px;display:flex;align-items:center;gap:14px;pointer-events:none;color:#3B3027;transition:left var(--t-slow) var(--ease-out),opacity var(--t-med);
+  filter:drop-shadow(0 0 6px rgba(246,238,220,.9))}
+.explore.collapsed~.cartouche{left:32px}
+.cartouche .rose{flex:none;transform-origin:50% 50%;animation:roseIn 1.2s var(--ease-out) .4s both}
+@keyframes roseIn{from{opacity:0;transform:rotate(-30deg) scale(.9)}to{opacity:1;transform:none}}
+.ct-txt{display:flex;flex-direction:column;gap:5px}
+.ct-k{font:600 10px/1 var(--f-display);letter-spacing:.32em;text-transform:uppercase;color:#7A6852}
+.ct-t{font:800 17px/1 var(--f-display);letter-spacing:-.02em;color:#2E241B}
+.greca{display:block;margin-top:3px;opacity:.85}
+.ct-s{display:flex;justify-content:space-between;width:var(--sw,120px);position:relative;padding-top:7px;font:600 9px/1 var(--f-sans);color:#5A4632;font-variant-numeric:tabular-nums}
+.ct-s i{position:absolute;left:0;top:0;width:100%;height:4px;border:1px solid #3B3027;background:linear-gradient(90deg,#3B3027 0 25%,transparent 25% 50%,#3B3027 50% 75%,transparent 75%)}
+.ct-s b{font-weight:600;transform:translateX(-40%)}.ct-s b:first-of-type{transform:none}.ct-s b:last-of-type{transform:translateX(30%)}
 /* ---------- Toast ---------- */
 .toast{position:fixed;z-index:2500;left:50%;bottom:var(--s6);transform:translate(-50%,12px);background:rgba(30,29,34,.92);color:#fff;padding:11px 18px;border-radius:var(--r-pill);font-size:13.5px;font-weight:500;box-shadow:var(--sh-2);opacity:0;pointer-events:none;transition:opacity var(--t-med) var(--ease-out),transform var(--t-med) var(--ease-out);white-space:nowrap}
 .toast.show{opacity:1;transform:translate(-50%,0)}
@@ -356,6 +376,7 @@ body.card-open .credits-bar{transform:translateX(calc(-1 * (var(--card-w) + 16px
   .hbtn.prev,.hbtn.next{opacity:1;width:34px;height:34px;margin-top:-17px}
   .toast{bottom:calc(92px + 56px)}
 }
+@media (max-width:760px){ .cartouche{left:auto;right:10px;bottom:auto;top:128px;gap:0} .cartouche .rose{width:52px;height:52px} .ct-txt{display:none} body.searching .cartouche,body.card-open .cartouche{opacity:0} }
 @media (min-width:761px){ .chips{display:none} .ex-tools .lang{display:none} }
 .lang-float{background:var(--glass);position:fixed;z-index:1050;top:var(--s4);right:var(--s4);padding:4px;box-shadow:var(--sh-2);transition:transform var(--t-slow) var(--ease-out)}
 .lang-float button{height:32px;min-width:40px}
