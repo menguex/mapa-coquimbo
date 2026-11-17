@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#F6F2EA">
+<title>Región de Coquimbo · Mapa interactivo — del mar a la cordillera</title>
+<meta name="description" content="Mapa interactivo de la Región de Coquimbo: Tierra del Pisco, turismo y naturaleza, historia y tradición, flora y fauna. Contenido de Fundación Herencia y Futuro.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22%231E1D22%22/%3E%3Cpath d=%22M5 23 12.5 10l5 7.5 3-4L27 23z%22 fill=%22none%22 stroke=%22%23F3C969%22 stroke-width=%222.4%22 stroke-linejoin=%22round%22/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="map" role="application" aria-label="Mapa de la Región de Coquimbo"></div>
+
+<!-- Loader -->
+<div class="loader" id="loader" aria-hidden="true">
+  <div class="loader-mark"><svg viewBox="0 0 32 32" width="44" height="44"><path class="ld-path" d="M4 24 12.5 10l5 7.5 3-4L28 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+  <p data-i18n="loading">Preparando el mapa…</p>
+</div>
+
+<!-- Mobile top bar -->
+<div class="mtop" id="mtop">
+  <div class="search-slot" id="slotMobile"></div>
+  <div class="chips" id="chips" role="group" aria-label="Filtros"></div>
+</div>
+
+<!-- Explore panel (desktop sidebar / mobile bottom sheet) -->
+<aside class="explore glass" id="explore" aria-label="Explorar">
+  <div class="sheet-handle" data-drag><span></span></div>
+  <header class="ex-head">
+    <div class="brand">
+      <div class="mark"><svg viewBox="0 0 32 32" width="22" height="22"><path d="M4 24 12.5 10l5 7.5 3-4L28 24" fill="none" stroke="#F3C969" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="brand-txt"><span class="eyebrow" data-i18n="eyebrow">Mapa interactivo</span><h1 data-i18n="title">Región de Coquimbo</h1></div>
+    </div>
+    <div class="ex-tools">
+      <div class="seg lang" role="group" aria-label="Idioma"><button data-lang="es" aria-pressed="true">ES</button><button data-lang="en" aria-pressed="false">EN</button></div>
+      <button class="icon-btn collapse" id="collapse" aria-label="Ocultar panel" data-i18n-aria="hidePanel"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button>
+    </div>
+  </header>
+  <p class="lead" data-i18n="subtitle">Del mar a la cordillera por los valles del pisco: 119 lugares, 3 rutas y la naturaleza del norte chico.</p>
+  <div class="search-slot" id="slotDesktop">
+    <div class="search" id="search">
+      <button class="s-back" id="sback" aria-label="Volver"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button>
+      <svg class="s-ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+      <input id="q" type="search" autocomplete="off" spellcheck="false" placeholder="Buscar lugar, pisquera, valle…" data-i18n-ph="search" aria-label="Buscar" role="combobox" aria-expanded="false" aria-controls="results">
+      <kbd class="s-kbd">/</kbd>
+      <button class="s-clear" id="qclear" aria-label="Limpiar"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      <div class="results" id="results" role="listbox"></div>
+    </div>
+  </div>
+  <div class="ex-scroll">
+    <section class="ex-sec">
+      <div class="sec-title"><h2 data-i18n="categories">Categorías</h2><button class="link-btn" id="allCats" data-i18n="showAll">Mostrar todo</button></div>
+      <div class="cat-list" id="catList"></div>
+    </section>
+    <section class="ex-sec">
+      <div class="sec-title"><h2 data-i18n="themRoutes">Rutas temáticas</h2></div>
+      <div class="route-list" id="routeList"></div>
+    </section>
+    <section class="ex-sec key">
+      <div class="sec-title"><h2 data-i18n="places">Ciudades y pueblos</h2></div>
+      <div class="badge-key" id="badgeKey"></div>
+    </section>
+    <footer class="ex-foot">
+      <img src="https://static.wixstatic.com/media/3f6032_5d818fe5cf694d17b896cb3d8ff8991a~mv2.png" alt="Fundación Herencia y Futuro" onerror="this.remove()">
+      <p data-i18n-html="credits"></p>
+      <a class="foot-link" href="icons.html"><span data-i18n="iconSystem">Sistema de íconos</span><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+    </footer>
+  </div>
+</aside>
+<button class="reopen glass" id="reopen" aria-label="Mostrar panel" hidden><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg><span data-i18n="explore">Explorar</span></button>
+
+<!-- Map controls -->
+<div class="seg lang lang-float glass" role="group" aria-label="Idioma / Language"><button data-lang="es" aria-pressed="true">ES</button><button data-lang="en" aria-pressed="false">EN</button></div>
+<div class="mapctl" id="mapctl">
+  <div class="ctl-group glass">
+    <button id="zin" aria-label="Acercar"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+    <button id="zout" aria-label="Alejar"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
+  </div>
+  <button class="ctl-single glass" id="zreset" aria-label="Ver toda la región"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+</div>
+
+<!-- Place card -->
+<article class="card" id="card" aria-live="polite" aria-hidden="true"></article>
+
+<!-- Credits -->
+<div class="credits-bar" id="credits"><button id="creditsBtn" aria-expanded="false"><span>© Fundación Herencia y Futuro · Esri · OpenStreetMap</span><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg></button><div class="credits-pop" id="creditsPop"></div></div>
+<div class="toast" id="toast" role="status"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<script src="places.js"></script>
+<script src="icons.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
